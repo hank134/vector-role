@@ -1,4 +1,4 @@
-Role Name
+Clickhouse
 =========
 
 Установка и запуск как службы Vector для передачи логов в Clickhouse
