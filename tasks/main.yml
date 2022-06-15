@@ -1,28 +1,55 @@
 ---
+
+- name: CheckOSFamily
+  debug:
+    msg: "OS: {{ ansible_facts['distribution'] }} vers: {{ ansible_distribution_major_version }}"
+
 - name: CheckVectorVersion
   debug:
     msg: "Version: {{ vector_version }}"
-- name: Install Vector
+
+- name: Install Vector CentOS 7 
   become: true
   ansible.builtin.yum:
     name: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-1.x86_64.rpm"
     state: present
+  when:
+    - ansible_facts['distribution'] == "CentOS"
+    - ansible_distribution_major_version == "7"
+
+
+- name: Copy_Repofile CentOS 8
+  ansible.builtin.copy:
+    src: templates/repos.d/
+    dest: /etc/yum.repos.d/
+  when:
+    - ansible_facts['distribution'] == "CentOS"
+    - ansible_distribution_major_version == "8"
+
+- name: Install Vector CentOS 8
+  become: true
+  ansible.builtin.yum:
+    name: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-1.x86_64.rpm"
+    state: present
+    disable_gpg_check: yes
+  when:
+    - ansible_facts['distribution'] == "CentOS"
+    - ansible_distribution_major_version == "8"
+
+- name: Install Vector Ubuntu
+  become: true
+  ansible.builtin.apt:
+    deb: https://packages.timber.io/vector/0.22.0/vector_0.22.0-1_amd64.deb
+  when: ansible_facts['distribution'] == "Ubuntu"
+
 - name: Copy_config_vector
   ansible.builtin.template:
     src: vector.toml.j2
-    dest: /home/centos/vector.toml
-    mode: "0644"
-    owner: centos
-    group: centos
-- name: Validate Vector
-  ansible.builtin.command: vector validate --no-environment /home/centos/vector.toml
-  changed_when: false
+    dest: /home/vector.toml
+
 - name: Config Vector service
   become: true
   ansible.builtin.template:
     src: vector.service.j2
     dest: /etc/systemd/system/vector.service
-    mode: "0644"
-    owner: centos
-    group: centos
-  notify: Start Vector service  
+#  notify: Start Vector service   
